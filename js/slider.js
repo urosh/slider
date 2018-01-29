@@ -16,7 +16,7 @@
 			sliderValue: null,
 			xOffset: null,
 			yOffset: null,
-			mouseCliend: null
+			mouseClient: null,
 		}
 
 		var settings = $.extend({
@@ -98,27 +98,38 @@
 				state.yOffset = state.mouseClient.pageY - sliderContainer.offset().top;
 				
 				if(state.xOffset > 0 && state.xOffset < settings.width - settings.handleWidth && state.yOffset > 0 && state.yOffset < settings.height) {
+					state.sliderValue = convertOffsetToValue(state.xOffset)
+					console.log(state.sliderValue)
 					sliderHandle.css({
 						left: state.xOffset + 'px'
 					})
 				}
 
 				if(state.xOffset < 0 && state.yOffset < settings.height) {
+					state.sliderValue = settings.min;
 					sliderHandle.css({
 						left: 0
 					})
 				}
 
 				if(state.xOffset > settings.width - settings.handleWidth && state.yOffset < settings.height) {
+					state.sliderValue = settings.max;
 					sliderHandle.css({
 						left: settings.width - settings.handleWidth + 'px'
 					})
 				}
 
+
 			}, settings.sliderPositionInterval);
 		}
 
-		
+		function convertOffsetToValue(x) {
+			return ( x * ( settings.max - settings.min ) / settings.width ); 
+		}
+
+		function convertValueToOffset(v) {
+			return  v * settings.width / (settings.max - settings.min );
+		}
 		addEventListeners();
 		
 	}

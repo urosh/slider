@@ -2,7 +2,6 @@
 	margin: 20px 20px;
 	background: gray;
 	position: relative
-
 }
 
 .slider-container.em-payout-slider .slider-track {
@@ -13,7 +12,6 @@
 }
 
 .slider-container.em-payout-slider .slider-handle{
-	
 	background-color: purple;
 	position: absolute;
 	top: 22px;
