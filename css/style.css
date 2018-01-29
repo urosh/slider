@@ -1,0 +1,21 @@
+.slider-container.em-payout-slider{
+	margin: 20px 20px;
+	background: gray;
+	position: relative
+
+}
+
+.slider-container.em-payout-slider .slider-track {
+	width: 100%;
+	background-color: brown;
+	position: absolute;
+	top: 25px;
+}
+
+.slider-container.em-payout-slider .slider-handle{
+	
+	background-color: purple;
+	position: absolute;
+	top: 22px;
+	left: 200px;
+}
