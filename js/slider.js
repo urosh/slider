@@ -18,11 +18,12 @@
 		var state = {
 			handleState: handleStates.FREE,
 			sliderValue: null,
-			handleXOffset: null,
-			handleYOffset: null,
-			mouseXDelta: null,
-			mouseXOffset: null,
-			mouseYOffset: null,
+			handleX: null,
+			handleY: null,
+			mouseXContainerOffset: null,
+			mouseYContainerOffset: null,
+			mouseXHandleOffset: null,
+			mouseYHandleOffset: null,
 			mouseClient: null,
 			sliderWidth: null,
 			sliderContainerHeight: null,
@@ -34,8 +35,8 @@
 			ticks: [-300, -150, 0, 150, 300],
 			complete: null,
 			sliderPositionInterval: 20,
-			max: 600,
-			min: -600,
+			max: 500,
+			min: -500,
 			sliderHeight: 10,
 			sliderPadding: 30,
 			ticksLabelFontSize: 22,
@@ -54,7 +55,7 @@
 		var ticksTopContainer = $('<div class="slider-tick-container top"></div>');	
 		var ticksBottomContainer = $('<div class="slider-tick-container bottom"></div>');
 		
-		var sliderStats = $('<div class="slider-stats">mouseXOffset: <span class="mouseXOffset"></span><br>handleXOffset: <span class="handleXOffset"></span><br>Mouse Delta: <span class="mouseDelta"></span><br>Delta Leaks: <span class="deltaLeak"></span></div>');
+		var sliderStats = $('<div class="slider-stats">mouseXContainerOffset: <span class="mouseXContainerOffset"></span> mouseXHandleOffset: <span class="mouseXHandleOffset"></span> Handler Position: <span class="handleX"></span> Slider Value: <span class="sliderValue"></span></div>');
 
 		sliderContainer.css({
 			width: parentWidth + 'px',
@@ -73,15 +74,29 @@
 		
 		state.handlePositionTop = state.sliderTrackPositionTop + ( settings.sliderHeight - settings.handleHeight ) / 2;
 		
-		state.handleXOffset = convertValueToOffset(settings.value);
+		state.handleX = convertValueToOffset(settings.value) - settings.handleWidth / 2;
 		
 		sliderHandle.css({
 			width: settings.handleWidth + 'px',
 			height: settings.handleHeight + 'px',
 			backgroundColor: settings.backgroundColor,
 			top: state.handlePositionTop + 'px',
-			left: state.handleXOffset + 'px'
+			left: state.handleX + 'px'
 		});
+
+		ticksTopContainer.css({
+			height: settings.ticksHeight + 'px',
+			top: state.sliderTrackPositionTop - settings.ticksHeight + 'px',
+			width: state.sliderWidth + 'px',
+			left: settings.sliderPadding + 'px'
+		})
+
+		ticksBottomContainer.css({
+			height: settings.ticksHeight + 'px',
+			top: state.sliderTrackPositionTop + settings.ticksHeight + 'px',
+			width: state.sliderWidth + 'px',
+			left: settings.sliderPadding + 'px'
+		})
 
 		
 
@@ -94,15 +109,20 @@
 		settings.ticks.forEach(function(tickValue) {
 			var tickBottom = $('<div class="slider-tick small"></div>');
 			var tickTop = $('<div class="slider-tick small"></div>');
-			tickBottom.css({
-				left: tickValue + 'px',
-			})
-			tickTop.css({
-				left: tickValue + 'px',
-				top: '5px'
-			})
+			var tickOffset = convertValueToOffset(tickValue) - settings.sliderPadding;
+			
 			ticksTopContainer.append(tickTop);
 			ticksBottomContainer.append(tickBottom);
+
+			tickBottom.css({
+				left: tickOffset + 'px',
+				height: settings.ticksHeight + 'px'
+			})
+			tickTop.css({
+				left: tickOffset + 'px',
+				height: settings.ticksHeight + 'px'
+			})
+
 		});
 
 		$(parent).prepend(sliderContainer);
@@ -112,16 +132,15 @@
 				
 				state.handleState = handleStates.ACTIVE;
 				if(state.handleState = handleStates.ACTIVE) {
+					state.mouseClient = e;
+					state.mouseXHandleOffset = state.mouseClient.pageX - sliderHandle.offset().left;
 					setMouseTrackingInterval();
 					state.handleState = handleStates.MOVING;
 				}
 			})
 
 			$(document).on('mouseup touchend', function(e) {
-				console.log('MouseUp')
 				state.handleState = handleStates.FREE;
-				state.mouseXOffset = null;
-				state.mouseYOffset = null;
 				if(mouseTrackingInterval){
 					clearInterval(mouseTrackingInterval);
 				}
@@ -150,88 +169,41 @@
 					return;
 				}
 				
-				/*state.mouseXOffset = e.pageX;
-				state.mouseYOffset = e.pageY;
-				state.handleXOffset = e.pageX - sliderContainer.offset().left - e.pageX - sliderHandle.offset().left;
-				console.log(e.pageX, sliderContainer.offset().left, sliderHandle.offset().left);
-				*/
+				state.mouseXContainerOffset = state.mouseClient.pageX - sliderContainer.offset().left;
 
-				if(!state.mouseXOffset){
-					state.mouseXOffset = state.mouseClient.pageX - sliderContainer.offset().left;
-					updateStats();
-					return;
+				state.handleX = state.mouseXContainerOffset - state.mouseXHandleOffset;
+
+				if(state.handleX < settings.sliderPadding){
+					state.handleX = settings.sliderPadding;					
 				}
-				
-				
-				
-				
-				state.mouseXDelta = state.mouseClient.pageX - sliderContainer.offset().left - state.mouseXOffset;
-				state.mouseXOffset = state.mouseClient.pageX - sliderContainer.offset().left;
-				state.handleXOffset = state.handleXOffset + state.mouseXDelta;
+
+				if(state.handleX > state.sliderWidth + settings.sliderPadding - settings.handleWidth){
+					state.handleX = state.sliderWidth + settings.sliderPadding - settings.handleWidth;					
+				}
+
+				state.sliderValue = convertOffsetToValue(state.handleX + settings.handleWidth / 2);
+
+				sliderHandle.css({
+					left: state.handleX + 'px'
+				});
 				updateStats();
-
-				//console.log(state.xOffset);
-				/*if(state.handleXOffset > settings.sliderPadding && state.handleXOffset < state.sliderWidth - settings.handleWidth + settings.sliderPadding ) {
-					
-					state.sliderValue = convertOffsetToValue(state.handleXOffset);
-					updateStats();
-					sliderHandle.css({
-						left: state.handleXOffset + 'px'
-					});
-
-					
-				}
-
-				//console.log(state.xOffset);
-				if(state.handleXOffset < settings.sliderPadding) {
-					state.sliderValue = settings.min;
-					state.handleXOffset = settings.sliderPadding;
-					updateStats();
-					sliderHandle.css({
-						left: state.handleXOffset + 'px'
-					});
-
-					
-				}*/
-
-
-
-				/*if(state.handleXOffset < 0 && state.yOffset < settings.height) {
-					state.handleXOffset = settings.sliderPadding;
-
-					state.sliderValue = settings.min;
-					sliderHandle.css({
-						left: state.handleXOffset + 'px'
-					})
-				}*/
-
-				/*if(state.xOffset > state.sliderWidth - settings.handleWidth && state.yOffset < settings.height) {
-					state.sliderValue = settings.max;
-					state.handleXOffset = settings.sliderPadding + state.sliderWidth;
-					sliderHandle.css({
-						left: settings.width - settings.handleWidth + 'px'
-					})
-				}*/
-
-
 			}, settings.sliderPositionInterval);
 		}
 
 		function convertOffsetToValue(x) {
-			return x * state.sliderWidth / ( settings.max - settings.min ) + settings.sliderPadding; 
+			return  (x - settings.sliderPadding) * (settings.max - settings.min ) / state.sliderWidth + settings.min; 
 		}
-
+		
 		function convertValueToOffset(v) {
 			return  settings.sliderPadding + ( state.sliderWidth * ( v - settings.min) ) / ( settings.max - settings.min );
 		}
 		function updateStats(){
-			$('.handleXOffset').text(state.handleXOffset);
-			$('.mouseXOffset').text(state.mouseXOffset);
-			$('.mouseDelta').text(state.mouseXDelta);
-			if(state.mouseXDelta > 10){
-				$('.deltaLeak').append(state.mouseXDelta + ' ');
-			}
+			$('.handleX').text(state.handleX);
+			$('.mouseXContainerOffset').text(state.mouseXContainerOffset);
+			$('.mouseXHandleOffset').text(state.mouseXHandleOffset);
+			$('.sliderValue').text(state.sliderValue);
 		}
+
 		addEventListeners();
 		
 	}

@@ -1,3 +1,6 @@
+body{
+	background-color: gray;
+}
 .my-slider-area{
 	width: 700px;
 	margin: 20px;
@@ -47,7 +50,7 @@
 }
 
 .slider-container.em-payout-slider .slider-tick-container{
-	background-color: green;
+	background-color: violet;
 	width: 100%;
 	position: absolute; 
 }
