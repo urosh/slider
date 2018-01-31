@@ -5,9 +5,8 @@
 		var parent = el.parent();
 		
 		el.hide();
+		
 		var parentWidth = parent.width();
-
-		console.log(parentWidth);
 
 		var handleStates = {
 			FREE: 'free',
@@ -29,15 +28,19 @@
 			sliderContainerHeight: null,
 			sliderTrackPositionTop: null,
 			handlePositionTop: null,
-			ticksPositions: []
+			ticksPositions: [],
+			max: null,
+			min: null,
+			tickValue: [],
+			toolTipValue: null,
+			sliderMode: null,
+			dealPrice: 12,
+			currentRate: 1.32781
 		}
 
 		var settings = $.extend({
-			ticks: [-300, -150, 0, 150, 300],
 			complete: null,
 			sliderPositionInterval: 20,
-			max: 500,
-			min: -500,
 			sliderHeight: 10,
 			sliderPadding: 30,
 			ticksLabelFontSize: 14,
@@ -47,19 +50,38 @@
 			handleHeight: 20,
 			backgroundColor: '#ecf7fc',
 			value: 0,
-			snapToTickRange: 20
+			snapToTickRange: 20,
+			toolTipHeight: 30,
+			toolTipWidth: 90,
+			toolTipFontSize: 16,
+			risk: 150
 		}, options);
 		
+		state.min = -4 * settings.risk;
+		state.max = 4 * settings.risk;
+
+		state.tickValues = [-2 * settings.risk, -1 * settings.risk, 0, settings.risk, 2 * settings.risk];
+
 		state.sliderWidth = parentWidth - settings.sliderPadding * 2;
 		state.sliderContainerHeight = ( settings.sliderHeight + 2 * settings.ticksHeight + 2 * settings.ticksLabelFontSize ) * 3;
+
 		var sliderContainer = $('<div class="slider-container em-payout-slider"></div>');	
 		var sliderTrack = $('<div class="slider-track"><div class="slider-track-half left"></div><div class="slider-track-half right"></div></div>');
+		
 		var sliderHandle = $('<div class="slider-handle"><span class="slider-arrow slider-left-arrow fa fa-angle-left"></span><span class="fa fa-angle-right slider-right-arrow slider-arrow"></span></div>');
+		
 		var ticksTopContainer = $('<div class="slider-tick-container top"></div>');	
 		var ticksBottomContainer = $('<div class="slider-tick-container bottom"></div>');
 		var tickLabelsTopContainer = $('<div class="slider-tick-labels-container top"></div>');
 		var tickLabelsBottomContainer = $('<div class="slider-tick-labels-container bottom"></div>');
 		
+		// Tooltips
+		var toolTipTop = $('<div class="slider-tooltip top">0</div>');
+		var toolTipBottom = $('<div class="slider-tooltip bottom"> ' + state.currentRate + ' </div>');
+		
+		// Slider mode
+		var sliderModeMenu = $('<div class="slider-menu"><div data-slider-menu-item="pips" class="slider-menu-item ">Pips</div><div data-slider-menu-item="rates" class="slider-menu-item active">Rates</div></div>');
+
 		sliderContainer.css({
 			width: parentWidth + 'px',
 			height: state.sliderContainerHeight + 'px',
@@ -114,6 +136,23 @@
 			width: state.sliderWidth + 'px',
 			left: settings.sliderPadding + 'px'
 		})
+		
+		toolTipTop.css({
+			top: state.handlePositionTop - settings.toolTipHeight - 4 + 'px',
+			left: state.handleX + settings.handleWidth / 2 - settings.toolTipWidth / 2 + 'px',
+			width: settings.toolTipWidth + 'px',
+			height: settings.toolTipHeight + 'px',
+			lineHeight: settings.toolTipHeight + 'px',
+		});
+
+		toolTipBottom.css({
+			top: state.handlePositionTop + settings.handleHeight + 4 + 'px',
+			left: state.handleX + settings.handleWidth / 2 - settings.toolTipWidth / 2 + 'px',
+			width: settings.toolTipWidth + 'px',
+			lineHeight: settings.toolTipHeight + 'px',
+			height: settings.toolTipHeight + 'px'
+		});
+
 
 		sliderContainer.append(sliderTrack);	
 		sliderContainer.append(sliderHandle);	
@@ -121,31 +160,54 @@
 		sliderContainer.append(ticksBottomContainer);	
 		sliderContainer.append(tickLabelsTopContainer);	
 		sliderContainer.append(tickLabelsBottomContainer);	
-		
+		sliderContainer.append(toolTipTop);
+		sliderContainer.append(toolTipBottom);
+		sliderContainer.append(sliderModeMenu);
+
 		function convertTickValueToTickLabel(tickValue) {
 			return tickValue < 0 ? '+' + (-tickValue) : '+' + tickValue	
 		}
+		
+		function convertTickValueToRate(tickValue, mode) {
+			return tickValue * state.dealPrice / settings.risk;
+		}
 
-		settings.ticks.forEach(function(tickValue, i) {
+		function formatRateValue(rateValue) {
+			console.log(rateValue)
+			rateValue = rateValue.toString();
+			var fullNumber = rateValue.split('.')[0];
+			var decimalNumber = rateValue.split('.')[1];
+			var decimalFirstPart = decimalNumber.substring(0, 2);
+			var decimalSecondPart = decimalNumber.substring(2, 4);
+			var decimalThirdPart = decimalNumber.substring(4, 5);
+			console.log('<div><span class="full-number"> ' + fullNumber + ' </span><span class="decimal-first-part">  ' + decimalFirstPart + ' </span><span class="decimal-second-part" > ' + decimalSecondPart + '  </span><span class="decimal-third-part"> ' + decimalThirdPart + ' </span></div>');
+		}
+		formatRateValue(state.currentRate);
+		state.tickValues.forEach(function(tickValue, i) {
 			if(tickValue !== 0){
 				var tickBottom = $('<div class="slider-tick small"></div>');
 				var tickTop = $('<div class="slider-tick small"></div>');
+				
 				var labelTop = $('<div data-label-index=' + i + ' class="topLabel">' + convertTickValueToTickLabel(tickValue) + '</div>');
+
+				var labelBottom = $('<div data-label-index= ' + i + ' class="bottomLabel">' + convertTickValueToRate(tickValue, state.sliderMode) + '</div>');
+				
 				var tickOffset = convertValueToOffset(tickValue) - settings.sliderPadding;
 				
 				ticksTopContainer.append(tickTop);
 				ticksBottomContainer.append(tickBottom);
 
 				tickBottom.css({
-					left: tickOffset + 'px',
+					left: tickOffset -1  + 'px',
 					height: settings.ticksHeight + 'px'
 				})
 				tickTop.css({
-					left: tickOffset + 'px',
+					left: tickOffset -1 + 'px',
 					height: settings.ticksHeight + 'px'
 				});
 				
 				tickLabelsTopContainer.append(labelTop);
+				tickLabelsBottomContainer.append(labelBottom);
 				
 				setTimeout(function(){
 					labelTop.css({
@@ -153,7 +215,15 @@
 						fontSize: settings.ticksLabelFontSize + 'px',
 						top: settings.ticksLabelPadding + 'px',
 						visibility: 'visible' 
-					})
+					});
+
+					labelBottom.css({
+						left: tickOffset - labelBottom.width() / 2 + 'px',
+						top: settings.ticksLabelPadding + 'px',
+						fontSize: '14px',
+						visibility: 'visible' 
+					});
+
 				}, 0)
 
 				state.ticksPositions.push(tickOffset);
@@ -167,11 +237,11 @@
 				ticksBottomContainer.append(tickBottom);
 
 				tickBottom.css({
-					left: tickOffset + 'px',
+					left: tickOffset - 1+ 'px',
 					height: state.sliderContainerHeight / 2 - settings.sliderPadding / 2 + 'px'
 				})
 				tickTop.css({
-					left: tickOffset + 'px',
+					left: tickOffset -1 + 'px',
 					height: settings.ticksHeight * 2 + 'px',
 					top: - settings.ticksHeight + 'px'
 				})
@@ -198,9 +268,6 @@
 				state.handleState = handleStates.FREE;
 				if(mouseTrackingInterval){
 					clearInterval(mouseTrackingInterval);
-					
-					
-
 				}
 			});
 
@@ -213,13 +280,20 @@
 
 			$(document).on('dragstart', function(){
 				return false;
+			});
+
+			$(document).on('click', '.slider-menu-item', function(e) {
+				$('.slider-menu-item').removeClass('active');
+				$(this).addClass('active');
+				state.sliderMode = $(this).attr('data-slider-menu-item');
 			})
 
 		}
 
 		var mouseTracking; 
 		var mouseTrackingInterval;
-		
+		var limitReached = false;
+
 		function setMouseTrackingInterval() {
 			mouseTrackingInterval = setInterval(function() {
 				if(!state.mouseClient) {
@@ -229,18 +303,35 @@
 				state.mouseXContainerOffset = state.mouseClient.pageX - sliderContainer.offset().left;
 
 				state.handleX = state.mouseXContainerOffset - state.mouseXHandleOffset;
-
+				
+				toolTipBottom.show();
+				
+				if(toolTipBottom.css('visibility') === 'hidden'){
+					toolTipBottom.css({
+						visibility: 'visible'
+					});
+				}
+				limitReached = false;
 				if(state.handleX < settings.sliderPadding){
-					state.handleX = settings.sliderPadding;					
+					state.handleX = settings.sliderPadding;	
+					toolTipBottom.css({
+						visibility: 'hidden'
+					});		
+					limitReached = true;		
 				}
 
 				if(state.handleX > state.sliderWidth + settings.sliderPadding - settings.handleWidth){
-					state.handleX = state.sliderWidth + settings.sliderPadding - settings.handleWidth;					
+					state.handleX = state.sliderWidth + settings.sliderPadding - settings.handleWidth;		
+					toolTipBottom.css({
+						visibility: 'hidden'
+					});			
+					limitReached = true;
 				}
 
 				// Snap to tick
 				
 				var handleMiddlePosition = state.handleX + settings.handleWidth / 2; 
+				
 				state.ticksPositions.forEach(function(tick) {
 					tick = tick + 30;
 					if(handleMiddlePosition - settings.snapToTickRange < tick && tick < handleMiddlePosition){
@@ -264,15 +355,28 @@
 				sliderHandle.css({
 					left: state.handleX + 'px'
 				});
+
+				toolTipTop.css({
+					left: state.handleX + settings.handleWidth / 2 - settings.toolTipWidth / 2 + 'px'
+				})
+
+				toolTipBottom.css({
+					left: state.handleX + settings.handleWidth / 2 - settings.toolTipWidth / 2 + 'px'
+				});
+
+				state.toolTipValue = limitReached ? 'unlimited' : parseInt(state.sliderValue < 0 ? -state.sliderValue : state.sliderValue);
+
+				
+				toolTipTop.html(state.toolTipValue);
 			}, settings.sliderPositionInterval);
 		}
 
 		function convertOffsetToValue(x) {
-			return  (x - settings.sliderPadding) * (settings.max - settings.min ) / state.sliderWidth + settings.min; 
+			return  (x - settings.sliderPadding) * (state.max - state.min ) / state.sliderWidth + state.min; 
 		}
 		
 		function convertValueToOffset(v) {
-			return  settings.sliderPadding + ( state.sliderWidth * ( v - settings.min) ) / ( settings.max - settings.min );
+			return  settings.sliderPadding + ( state.sliderWidth * ( v - state.min) ) / ( state.max - state.min );
 		}
 			
 		function updateLabels() {
