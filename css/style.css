@@ -26,6 +26,20 @@ body{
 	user-drag: none;
 }
 
+.slider-container.em-payout-slider .slider-track .slider-track-half{
+	width: 50%;
+	float: left;
+	height: 100%;
+}
+
+.slider-container.em-payout-slider .slider-track .slider-track-half.left{
+	background-image: linear-gradient(to right, #005da3, #0092c4);
+}
+
+.slider-container.em-payout-slider .slider-track .slider-track-half.right{
+	background-image: linear-gradient(to right, #82b757, #4c8d2c);
+}
+
 .slider-container.em-payout-slider .slider-handle{
 	
 	position: absolute;
@@ -60,11 +74,17 @@ body{
 .slider-container.em-payout-slider .slider-tick-container.bottom{
 }
 
-.slider-container.em-payout-slider .slider-tick.small{
-	width: 1px;
+.slider-container.em-payout-slider .slider-tick{
 	background-color: black;
 	position: absolute;
-	top: 0;
+}
+
+.slider-container.em-payout-slider .slider-tick.small{
+	width: 1px;
+}
+.slider-container.em-payout-slider .slider-tick.big{
+	width: 1px;
+	z-index: 10000;
 }
 
 .slider-container.em-payout-slider .slider-arrow{
@@ -80,4 +100,15 @@ body{
 .slider-container.em-payout-slider .slider-left-arrow{
 	margin-right: 3px;
 	display: inline-block;
+}
+
+.slider-container.em-payout-slider .slider-tick-labels-container{
+	background: steelblue;
+	position: absolute;
+}
+
+.slider-container.em-payout-slider .topLabel{
+	position: absolute;
+	font-weight: bold;
+	visibility: hidden;
 }
