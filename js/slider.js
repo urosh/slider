@@ -33,9 +33,11 @@
 			min: null,
 			tickValue: [],
 			toolTipValue: null,
-			sliderMode: null,
+			sliderMode: 'rates',
 			dealPrice: 12,
-			currentRate: 1.32781
+			currentRate: 1.32781,
+			sliderWidth: null,
+			sliderContainerHeight: null
 		}
 
 		var settings = $.extend({
@@ -59,7 +61,7 @@
 		
 		state.min = -4 * settings.risk;
 		state.max = 4 * settings.risk;
-
+		state.sliderValue = settings.value;
 		state.tickValues = [-2 * settings.risk, -1 * settings.risk, 0, settings.risk, 2 * settings.risk];
 
 		state.sliderWidth = parentWidth - settings.sliderPadding * 2;
@@ -77,7 +79,7 @@
 		
 		// Tooltips
 		var toolTipTop = $('<div class="slider-tooltip top">0</div>');
-		var toolTipBottom = $('<div class="slider-tooltip bottom"> ' + state.currentRate + ' </div>');
+		var toolTipBottom = $('<div class="slider-tooltip bottom"> ' + convertSliderValueToPipRate() + ' </div>');
 		
 		// Slider mode
 		var sliderModeMenu = $('<div class="slider-menu"><div data-slider-menu-item="pips" class="slider-menu-item ">Pips</div><div data-slider-menu-item="rates" class="slider-menu-item active">Rates</div></div>');
@@ -173,7 +175,6 @@
 		}
 
 		function formatRateValue(rateValue) {
-			console.log(rateValue)
 			rateValue = rateValue.toString();
 			var fullNumber = rateValue.split('.')[0];
 			var decimalNumber = rateValue.split('.')[1];
@@ -182,7 +183,9 @@
 			var decimalThirdPart = decimalNumber.substring(4, 5);
 			console.log('<div><span class="full-number"> ' + fullNumber + ' </span><span class="decimal-first-part">  ' + decimalFirstPart + ' </span><span class="decimal-second-part" > ' + decimalSecondPart + '  </span><span class="decimal-third-part"> ' + decimalThirdPart + ' </span></div>');
 		}
+		
 		formatRateValue(state.currentRate);
+
 		state.tickValues.forEach(function(tickValue, i) {
 			if(tickValue !== 0){
 				var tickBottom = $('<div class="slider-tick small"></div>');
@@ -190,8 +193,9 @@
 				
 				var labelTop = $('<div data-label-index=' + i + ' class="topLabel">' + convertTickValueToTickLabel(tickValue) + '</div>');
 
-				var labelBottom = $('<div data-label-index= ' + i + ' class="bottomLabel">' + convertTickValueToRate(tickValue, state.sliderMode) + '</div>');
-				
+				/*var labelBottom = $('<div data-label-index= ' + i + ' class="bottomLabel">' + convertTickValueToRate(tickValue, state.sliderMode) + '</div>');*/
+				var labelBottom = $('<div data-label-risk= ' + tickValue + ' class="bottomLabel">' + convertSliderValueToPipRate(tickValue) + '</div>');
+
 				var tickOffset = convertValueToOffset(tickValue) - settings.sliderPadding;
 				
 				ticksTopContainer.append(tickTop);
@@ -286,6 +290,7 @@
 				$('.slider-menu-item').removeClass('active');
 				$(this).addClass('active');
 				state.sliderMode = $(this).attr('data-slider-menu-item');
+				modeChange();
 			})
 
 		}
@@ -368,7 +373,17 @@
 
 				
 				toolTipTop.html(state.toolTipValue);
+				toolTipBottom.html(convertSliderValueToPipRate())
 			}, settings.sliderPositionInterval);
+		}
+
+		function convertSliderValueToPipRate(value) {
+			var sliderValue = value || state.sliderValue;
+			if(state.sliderMode === 'rates'){
+				return convertRiskToPrice(sliderValue);
+			}
+
+			return convertRiskToPips(sliderValue);
 		}
 
 		function convertOffsetToValue(x) {
@@ -386,8 +401,33 @@
 		function updateTicks() {
 
 		}
+		
+		
+
+		function convertRiskToPrice(risk) {
+			return parseFloat((state.currentRate + convertRiskToPips(risk) / 100000).toFixed(5));	
+		}
+
+		function convertRiskToPips(risk) {
+			return risk * state.dealPrice / settings.risk;	
+		}
 
 		addEventListeners();
+		
+		function modeChange() {
+			$('.bottomLabel').each(function(i, el) {
+				var tickValue = $(this).attr('data-label-risk');
+				var value = convertSliderValueToPipRate(tickValue);
+				$(this).html(value);
+				var tickOffset = convertValueToOffset(tickValue) - settings.sliderPadding;
+				$(this).css({
+					left: tickOffset - $(this).width() / 2 + 'px',
+				});
+			})
+
+		
+			toolTipBottom.html(convertSliderValueToPipRate())
+		}
 
 		this.setRisk = function(risk) {
 
