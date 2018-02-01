@@ -19,7 +19,10 @@ var state = {
 	toolTipValue: null,
 	sliderMode: null,
 	dealPrice: 12,
-	currentRate: 1.32781
+	currentRate: 1.32781,
+	sliderWidth: null,
+	sliderContainerHeight: null,
+	snapEnabled: null
 }
 
 var settings = $.extend({
@@ -55,18 +58,32 @@ var tickLabelsBottomContainer = ;
 var toolTipTop = ;
 var toolTipBottom = ;
 
+
+var downLabel;
+var currencyLabel;
+var upLabel;
+
+
 // Slider mode
 var sliderModeMenu = ;
 
+function initializeState() {}
+function initializeDomElements() {}
+function addDomElements() {}
+
+
 function convertTickValueToTickLabel(){}
-function convertTickValueToRate(){}
-function formatRateValue(){}
+function formatRateValue() {}
 function addEventListeners(){}
 function setMouseTrackingInterval(){}
+function convertSliderValueToPipRate() {}
+
 function convertOffsetToValue(){}
 function convertValueToOffset(){}
+
 function convertRiskToPrice(){}
 
+function modeChange(){}
 
 
 
