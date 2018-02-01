@@ -230,7 +230,7 @@
 				var tickClass = tickValue === 0 ? 'big' : 'small';
 				
 				var topTickHeight = tickValue === 0 ? settings.ticksHeight * 2 : settings.ticksHeight;
-				var bottomTickHeight = tickValue === 0 ? state.sliderContainerHeight / 2 - settings.sliderPadding / 2 : settings.ticksHeight;
+				var bottomTickHeight = tickValue === 0 ? state.sliderContainerHeight / 2  : settings.ticksHeight;
 
 				var tickBottom = $('<div class="slider-tick ' + tickClass + ' "></div>');
 				var tickTop = $('<div class="slider-tick ' + tickClass + '"></div>');
@@ -490,7 +490,8 @@
 		function convertValueToOffset(v) {
 			return  settings.sliderPadding + ( state.sliderWidth * ( v - state.min) ) / ( state.max - state.min );
 		}
-			
+		
+
 		function updateLabels() {
 			
 		}
@@ -534,12 +535,21 @@
 		// This should update top tick labels, 
 		this.setRisk = function(risk) {
 			if(!risk) return;
-
+			//toolTipBottom.html(convertSliderValueToPipRate())
 			settings.risk = risk;
 
 			state.min = -4 * settings.risk;
 			state.max = 4 * settings.risk;
 			state.tickValues = [-2 * settings.risk, -1 * settings.risk, 0, settings.risk, 2 * settings.risk];
+			
+
+			state.sliderValue = convertOffsetToValue(state.handleX + settings.handleWidth / 2);
+
+			if(state.toolTipValue !== 'unlimited'){
+				state.toolTipValue = parseInt(state.sliderValue < 0 ? -state.sliderValue : state.sliderValue)	
+			}
+			
+			toolTipTop.html(state.toolTipValue);
 
 			addLabels();
 
@@ -547,13 +557,34 @@
 		
 		// API function to set/change current rate. 
 		// This should update bottom tick labels
-		this.setCurrentPrice = function(currentPrice) {
+		this.setCurrentRate = function(currentRate) {
+			if(!currentRate) return;
+
+			state.currentRate = currentRate;
+
+			if(state.sliderMode === 'rates') {
+				// Update bottom labels
+				// Update bottom tooltip
+				toolTipBottom.html(convertSliderValueToPipRate())
+				addLabels();
+			}
 
 		}
 		
 		// API function to set/change current deal price in pips. 
 		// This should update bottom and top slider track and labels. 
 		this.setDealPrice = function(dealPrice) {
+			if(!dealPrice) return;
+
+			state.dealPrice = dealPrice;
+
+			if(state.sliderMode === 'pips') {
+				// Update bottom labels
+				// Update bottom tooltip
+				toolTipBottom.html(convertSliderValueToPipRate())
+				addLabels();
+			}
+
 
 		}
 

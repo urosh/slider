@@ -8,6 +8,8 @@ $(document).ready(function() {
 	
 	setTimeout(function(){
 		console.log(em_slider);
-		em_slider.setRisk(300);
+		//em_slider.setRisk(300);
+		//em_slider.setCurrentRate(1.32222);
+		em_slider.setDealPrice(48);
 	}, 3000)
 })
